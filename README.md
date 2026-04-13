@@ -1,30 +1,90 @@
-# cool-retro-term
+# cool-retro-term (Apple Silicon Native)
 
-|> Default Amber|C:\ IBM DOS|$ Default Green|
-|---|---|---|
-|![Default Amber Cool Retro Term](https://user-images.githubusercontent.com/121322/32070717-16708784-ba42-11e7-8572-a8fcc10d7f7d.gif)|![IBM DOS](https://user-images.githubusercontent.com/121322/32070716-16567e5c-ba42-11e7-9e64-ba96dfe9b64d.gif)|![Default Green Cool Retro Term](https://user-images.githubusercontent.com/121322/32070715-163a1c94-ba42-11e7-80bb-41fbf10fc634.gif)|
+A fork of [Swordfish90/cool-retro-term](https://github.com/Swordfish90/cool-retro-term) built natively for Apple Silicon (ARM64). No Rosetta required.
 
-## Description
-cool-retro-term is a terminal emulator which mimics the look and feel of the old cathode tube screens.
-It has been designed to be eye-candy, customizable, and reasonably lightweight.
+![screenshot](screenshot.png)
 
-It uses the QML port of qtermwidget (Konsole): https://github.com/Swordfish90/qmltermwidget.
+## Why this fork?
 
-This terminal emulator works under Linux and macOS and requires Qt6.
+The upstream project doesn't ship ARM64 macOS binaries. The Homebrew cask is Intel-only (runs via Rosetta), and the older v1.2.0 ARM64 community builds crash on macOS 14+ due to Qt5's OpenGL context failures on Apple Silicon.
 
-Settings such as colors, fonts, and effects can be accessed via context menu.
+This fork builds the latest Qt6 master branch natively on ARM64. It just works.
 
-## Screenshots
-![Image](<https://i.imgur.com/TNumkDn.png>)
-![Image](<https://i.imgur.com/hfjWOM4.png>)
-![Image](<https://i.imgur.com/GYRDPzJ.jpg>)
+## What is cool-retro-term?
 
-## Install
+A terminal emulator that mimics the look and feel of old cathode ray tube (CRT) screens. It comes with several built-in profiles:
 
-If you want to get a hold of the latest version, just go to the Releases page and grab the latest AppImage (Linux) or dmg (macOS).
+- **Default Futuristic** -- sci-fi terminal vibes
+- **Green Phosphor** -- classic Matrix/hacker green
+- **Amber Phosphor** -- warm retro amber (shown above running Claude Code)
+- **Vintage** -- dusty, flickering, barely-holding-together CRT
+- **IBM DOS** -- the beige box experience
+- And more...
 
-Alternatively, most distributions such as Ubuntu, Fedora or Arch already package cool-retro-term in their official repositories.
+All the CRT effects are configurable: scanlines, screen curvature, bloom, phosphor glow, flicker, burn-in, jitter, ambient light.
 
-## Building
+It is a fully functional terminal emulator -- run your shell, editors, CLI tools, whatever. It's not a toy.
 
-Check out the wiki and follow the instructions on how to build it on [Linux](https://github.com/Swordfish90/cool-retro-term/wiki/Build-Instructions-(Linux)) and [macOS](https://github.com/Swordfish90/cool-retro-term/wiki/Build-Instructions-(macOS)).
+## Build from source (macOS Apple Silicon)
+
+### Prerequisites
+
+Install Qt6 via Homebrew:
+
+```bash
+brew install qt@6 qt5compat qtshadertools
+```
+
+### Build
+
+```bash
+git clone --recursive https://github.com/dragontpe/cool-retro-term.git
+cd cool-retro-term
+qmake6
+make -j$(sysctl -n hw.ncpu)
+```
+
+### Install
+
+The build produces `cool-retro-term.app` in the project root. To install it properly:
+
+```bash
+# Copy the app bundle
+cp -R cool-retro-term.app /Applications/cool-retro-term.app
+
+# Bundle the QML terminal widget plugin
+mkdir -p /Applications/cool-retro-term.app/Contents/Resources/qml/QMLTermWidget
+cp -R qmltermwidget/QMLTermWidget/ /Applications/cool-retro-term.app/Contents/Resources/qml/QMLTermWidget/
+
+# Create a launcher wrapper that sets the QML import path
+cd /Applications/cool-retro-term.app/Contents/MacOS
+mv cool-retro-term cool-retro-term.bin
+cat > cool-retro-term << 'EOF'
+#!/bin/bash
+DIR="$(cd "$(dirname "$0")" && pwd)"
+export QML2_IMPORT_PATH="${DIR}/../Resources/qml"
+exec "${DIR}/cool-retro-term.bin" "$@"
+EOF
+chmod +x cool-retro-term
+```
+
+Launch from Applications or Spotlight like any other app.
+
+### Settings
+
+Access settings via the menu bar or **Cmd+,** (standard macOS shortcut). From there you can switch profiles and tweak individual effects.
+
+## Tested on
+
+- MacBook Pro (M4 Max)
+- macOS Tahoe (26.2)
+- Qt 6.11.0
+- Xcode Command Line Tools
+
+## Credits
+
+All credit to [Swordfish90](https://github.com/Swordfish90) for creating cool-retro-term. This fork only exists because the upstream CI doesn't build for ARM64 yet.
+
+## License
+
+GPL-3.0 -- same as upstream.
